@@ -1,0 +1,30 @@
+{
+    "author": "Jesse Ditto",
+    "name": "EmergencyEnrichment",
+    "version": "0.0.1",
+    "homepage": "",
+    "licenses": {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    },
+    "bugs": "",
+    "repository": {
+      "type": "git",
+      "url": ""
+    },
+    "devDependencies": {
+      "event-stream": "~3.3.2",
+      "gulp": "~3.9.0",
+      "gulp-concat": "~2.6.0",
+      "gulp-jshint": "~1.12.0",
+      "gulp-less": "~3.0.3",
+      "gulp-qunit": "^1.5.0",
+      "gulp-sass": "~2.1.0",
+      "gulp-uglify": "~1.4.2",
+      "gulp-util": "~3.0.7"
+    },
+    "dependencies": {
+      "bower": "1.7.9"
+    }
+  }
+  

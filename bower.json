@@ -1,0 +1,21 @@
+{
+    "name": "EmergencyEnrichment",
+    "version": "0.0.1",
+    "author": "Jesse Ditto",
+    "license": "MIT",
+    "devDependencies": {},
+    "dependencies": {
+      "bootstrap": "3.3.7",
+      "ol3": "ol3-bower#3.18.2",
+      "ol3-layerswitcher": "1.1.0",
+      "ol3-popup": "1.0.1",
+      "select2": "4.0.2",
+      "moment": "momentjs#2.13.0",
+      "jquery": "3.2.1",
+      "font-awesome": "fontawesome#4.7.0",
+      "es6-shim": "0.35.2",
+      "es5-shim": "4.5.9",
+      "ramda": "0.23.0"
+    }
+  }
+  
