@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from enrich.views import index as start_page
 
 urlpatterns = [
+    url(r'^$', start_page),
     url(r'^admin/', admin.site.urls),
     url(r'^enrich/', include('enrich.urls')),
 ]

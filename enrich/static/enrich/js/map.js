@@ -10,6 +10,7 @@ if (!String.prototype.supplant) {
     };
 }
 
+//adding the richmond arc service just to add a bit of context to the vacinity of parcel data
 var serviceUrl = 'http://gis.richmondgov.com/ArcGIS/rest/services/WebMercator/Parcels/MapServer/2/query';
 
 var esrijsonFormat = new ol.format.EsriJSON();
@@ -58,6 +59,7 @@ var raster = new ol.layer.Tile({
     })
 });
 
+// setting center to richmond va to cut down on map navigation
 var map = new ol.Map({
     layers: [raster, vector],
     target: document.getElementById('map'),
@@ -98,6 +100,8 @@ map.on('click', function (evt) {
     displayFeatureInfo(evt.pixel);
 });
 
+
+// adding popup to add points so that the harvested data can be displayed
 var element = document.getElementById('popup');
 
 var popup = new ol.Overlay({
@@ -105,6 +109,7 @@ var popup = new ol.Overlay({
     positioning: 'bottom-center',
     stopEvent: false
 });
+
 map.addOverlay(popup);
 
 map.on('click', function (evt) {

@@ -6,9 +6,11 @@ from emergency_enrich import settings
 
 def handle_dispatch(data):
     ''' Handles provided data'''
+    # some data pre parsing to simplifiy the following functions
     lat = data['apparatus'][0]['unit_status']['arrived']['latitude']
     lon = data['apparatus'][0]['unit_status']['arrived']['longitude']
     day, hour = data['apparatus'][0]['unit_status']['arrived']['timestamp'].split('T')
+    # parse down to just the hour of the day, assuming 24 template
     hour = hour.split(':')[0]
     weather_data = get_weather_data(lat, lon, day)
     data['weather'] = parse_weather(weather_data, hour)
@@ -35,11 +37,13 @@ def closest_hour(list, hour):
     ''' Gets the closest by the hour entry from the weather api'''
     best_entry = None
     best_dist = None
+    # loop through and grab the lowest absolute value 
     for entry in list:
         dist = float(hour + '00') - float(entry['time'])
         if abs(dist) < best_dist or best_dist is None:
             best_entry = entry
             best_dist = abs(dist)
+    # return the closest hourly weather data recorded for the day
     return best_entry
 
 def get_parcel_data(lat, lon):
@@ -48,6 +52,7 @@ def get_parcel_data(lat, lon):
     url = settings.PARCEL_ARC_REST.format(coords)
     res = json.loads(requests.get(url).text)
     if len(res['features']) == 0:
+        # return simple message so at least weather data is returned when no parcel data is found
         return {'Parcel': 'No Parcel data found'}
     else:
         return get_specific_parcel(str(res['features'][0]['attributes']['OBJECTID']))
