@@ -1,3 +1,4 @@
 node_modules
 *.pyc
 enrich/static/enrich/vendor
+db.sqlite3

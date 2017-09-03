@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ArcGIS REST Feature Service</title>
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://openlayers.org/en/v3.11.1/css/ol.css" type="text/css">
+    <script src="https://openlayers.org/en/v3.11.1/build/ol.js"></script>
+  </head>
+  <body>
+    <div id="map" class="map"><div id="popup"></div></div>
+    <div id="info">&nbsp;</div>
+    <label>Paste json data here</label>
+    <textarea id='dispatchData'>
+    </textarea>
+    <button id='submit' type="button">Submit</button> 
+    <script>
+      var raster = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          attributions: 'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
+              'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/' +
+              'World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+        })
+      });
+
+      var map = new ol.Map({
+        layers: [raster],
+        target: document.getElementById('map'),
+        view: new ol.View({
+          center: ol.proj.transform([-77.44217, 37.542342], 'EPSG:4326', 'EPSG:3857'),
+          zoom: 7
+        })
+      });
+
+      var displayFeatureInfo = function(pixel) {
+        var features = [];
+        map.forEachFeatureAtPixel(pixel, function(feature) {
+          features.push(feature);
+        });
+        if (features.length > 0) {
+          var info = [];
+          var i, ii;
+          for (i = 0, ii = features.length; i < ii; ++i) {
+            info.push(features[i].get('field_name'));
+          }
+          document.getElementById('info').innerHTML = info.join(', ') || '(unknown)';
+          map.getTarget().style.cursor = 'pointer';
+        } else {
+          document.getElementById('info').innerHTML = '&nbsp;';
+          map.getTarget().style.cursor = '';
+        }
+      };
+
+      map.on('pointermove', function(evt) {
+        if (evt.dragging) {
+          return;
+        }
+        var pixel = map.getEventPixel(evt.originalEvent);
+        displayFeatureInfo(pixel);
+      });
+
+      map.on('click', function(evt) {
+        displayFeatureInfo(evt.pixel);
+      });
+
+      var element = document.getElementById('popup');
+
+      var popup = new ol.Overlay({
+        element: element,
+        positioning: 'bottom-center',
+        stopEvent: false
+      });
+      map.addOverlay(popup);
+
+      map.on('click', function(evt) {
+        var feature = map.forEachFeatureAtPixel(evt.pixel,
+            function(feature, layer) {
+              return feature;
+            });
+        if (feature.get('enrichedData')) {
+          popup.setPosition(evt.coordinate);
+          $(element).popover({
+            'placement': 'top',
+            'html': true,
+            'content': JSON.stringify(feature.get('enrichedData'))
+          });
+          $(element).popover('show');
+        } else {
+          $(element).popover('destroy');
+        }
+      });
+
+      $('#submit').click(function() {
+        ths = this;
+        $.post('/enrich/dispatch/', $('#dispatchData').val().trim())
+        .done(function(data) {
+          var enrichedData = JSON.parse(data);
+          var arrived = enrichedData.apparatus[0].unit_status.arrived;
+          var point_feature = new ol.Feature({ });
+
+          // must convert coords to ol3 default projection
+          var point_geom = new ol.geom.Point(
+            ol.proj.transform([arrived.longitude, arrived.latitude], 'EPSG:4326','EPSG:3857')
+          );
+          point_feature.setGeometry(point_geom);
+          point_feature.set('enrichedData', enrichedData);
+          var vector_layer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+              features: [point_feature]
+            })
+          })
+          map.addLayer(vector_layer);
+        })
+        .error(function(e) {
+          console.log(e);
+        });
+      });
+    </script>
+  </body>
+</html>

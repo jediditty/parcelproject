@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework',
+    'enrich.apps.EnrichConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -118,3 +120,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+WEATHER_API = 'https://api.worldweatheronline.com/premium/v1/past-weather.ashx?'
+WEATHER_KEY = '03805cb15fca47d293f22531170309'
