@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 
 import json
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .parse_weather import handle_dispatch
+from .parse_weather import handle_dispatch, get_parcel_data
 
 
 # Create your views here.
@@ -18,4 +18,4 @@ def dispatch(request):
     ''' View for dispatch data'''
     if request.method == 'POST':
         enriched_data = handle_dispatch(json.loads(request.body))
-        return HttpResponse(json.dumps(enriched_data))
+        return JsonResponse(enriched_data)

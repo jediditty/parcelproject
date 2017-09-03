@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import requests
 import json
+import requests
 from emergency_enrich import settings
 
 
@@ -12,12 +12,17 @@ def handle_dispatch(data):
     hour = hour.split(':')[0]
     weather_data = get_weather_data(lat, lon, day)
     data['weather'] = parse_weather(weather_data, hour)
-    print data
-    return data
+
+    # Get Parcel data
+    data['parcel_data'] = get_parcel_data(str(lat), str(lon))
+    # convert to geojson
+    return data_to_geojson(data, lat, lon)
 
 def get_weather_data(lat, lon, date):
     ''' Get weather api data'''
-    url = settings.WEATHER_API + 'key=' + settings.WEATHER_KEY + '&q=' + str(lat) + ','+ str(lon) +'&format=json&date=' + date
+    url = settings.WEATHER_API + 'key=' \
+        + settings.WEATHER_KEY + '&q=' + \
+        str(lat) + ','+ str(lon) +'&format=json&date=' + date
     res = requests.get(url)
     return json.loads(res.text)
 
@@ -32,9 +37,49 @@ def closest_hour(list, hour):
     best_dist = None
     for entry in list:
         dist = float(hour + '00') - float(entry['time'])
-        print abs(dist)
-        print best_dist
         if abs(dist) < best_dist or best_dist is None:
             best_entry = entry
             best_dist = abs(dist)
     return best_entry
+
+def get_parcel_data(lat, lon):
+    ''' Get data from the richmond arc service'''
+    coords = '{},{}'.format(lon, lat)
+    url = settings.PARCEL_ARC_REST.format(coords)
+    res = json.loads(requests.get(url).text)
+    if len(res['features']) == 0:
+        return {'Parcel': 'No Parcel data found'}
+    else:
+        return get_specific_parcel(str(res['features'][0]['attributes']['OBJECTID']))
+
+def get_specific_parcel(obj_id):
+    ''' Parse individual obj data'''
+    url = settings.PARCEL_URL.format(obj_id)
+    res = json.loads(requests.get(url).text)
+    if res.has_key('feature') is True:
+        res['feature']['properties'] = res['feature'].pop('attributes')
+        geom = res['feature']['geometry']
+        geom['coordinates'] = geom.pop('rings')
+        geom['type'] = 'Polygon'
+        return res
+    else:
+        return {'Parcel': 'No Parcel data found'}
+
+def data_to_geojson(data, lat, lon):
+    ''' convert to geojson'''
+    return {"type": "FeatureCollection",
+                "features": [{
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [lon, lat]
+                        },
+                        "properties": {
+                            "parcel_data": data['parcel_data'],
+                            "address": data['address'],
+                            "description": data['description'],
+                            "weather": data['weather']
+                        }
+                    }
+                ]
+            }

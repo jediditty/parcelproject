@@ -123,3 +123,6 @@ STATIC_URL = '/static/'
 
 WEATHER_API = 'https://api.worldweatheronline.com/premium/v1/past-weather.ashx?'
 WEATHER_KEY = '03805cb15fca47d293f22531170309'
+
+PARCEL_URL = 'http://gis.richmondgov.com/ArcGIS/rest/services/WebMercator/Parcels/MapServer/2/{}?f=json'
+PARCEL_ARC_REST = 'http://gis.richmondgov.com/ArcGIS/rest/services/WebMercator/Parcels/MapServer/2/query?text=&geometry={}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&relationParam=&objectIds=&where=&time=&returnCountOnly=false&returnIdsOnly=false&returnGeometry=true&maxAllowableOffset=&outSR=4326&outFields=OBJECTID&f=json'

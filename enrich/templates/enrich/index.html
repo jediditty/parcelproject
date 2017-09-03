@@ -7,15 +7,67 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://openlayers.org/en/v3.11.1/css/ol.css" type="text/css">
     <script src="https://openlayers.org/en/v3.11.1/build/ol.js"></script>
+
+    <style>
+      #map {
+        position: relative;
+        height: 500px;
+      }
+    </style>
+
   </head>
-  <body>
-    <div id="map" class="map"><div id="popup"></div></div>
-    <div id="info">&nbsp;</div>
-    <label>Paste json data here</label>
-    <textarea id='dispatchData'>
-    </textarea>
-    <button id='submit' type="button">Submit</button> 
+  <body class="container-fluid">
+    <div class="row-fluid">
+      <div>
+        <div id="map"><div id="popup"></div></div>
+      </div>
+    </div>
+    <div class="row-fluid">
+      <div id="info" >&nbsp;</div>
+      <label>Paste json data here</label>
+      <textarea id='dispatchData'>
+      </textarea>
+      <button id='submit' type="button">Submit</button> 
+    </div>
+
     <script>
+      var serviceUrl = 'http://gis.richmondgov.com/ArcGIS/rest/services/WebMercator/Parcels/MapServer/2/query';
+
+      var esrijsonFormat = new ol.format.EsriJSON();
+
+      var vectorSource = new ol.source.Vector({
+        loader: function(extent, resolution, projection) {
+          var url = serviceUrl + '/?f=json&' +
+              'returnGeometry=true&spatialRel=esriSpatialRelIntersects&geometry=' +
+              encodeURIComponent('{"xmin":' + extent[0] + ',"ymin":' +
+                  extent[1] + ',"xmax":' + extent[2] + ',"ymax":' + extent[3] +
+                  ',"spatialReference":{"wkid":102100}}') +
+              '&geometryType=esriGeometryEnvelope&inSR=102100&outFields=*' +
+              '&outSR=102100';
+          $.ajax({url: url, dataType: 'jsonp', success: function(response) {
+            if (response.error) {
+              alert(response.error.message + '\n' +
+                  response.error.details.join('\n'));
+            } else {
+              // dataProjection will be read from document
+              var features = esrijsonFormat.readFeatures(response, {
+                featureProjection: projection
+              });
+              if (features.length > 0) {
+                vectorSource.addFeatures(features);
+              }
+            }
+          }});
+        },
+        strategy: ol.loadingstrategy.tile(ol.tilegrid.createXYZ({
+          tileSize: 512
+        }))
+      });
+
+      var vector = new ol.layer.Vector({
+        source: vectorSource
+      });
+
       var raster = new ol.layer.Tile({
         source: new ol.source.XYZ({
           attributions: 'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
@@ -26,7 +78,7 @@
       });
 
       var map = new ol.Map({
-        layers: [raster],
+        layers: [raster, vector],
         target: document.getElementById('map'),
         view: new ol.View({
           center: ol.proj.transform([-77.44217, 37.542342], 'EPSG:4326', 'EPSG:3857'),
@@ -96,16 +148,24 @@
         ths = this;
         $.post('/enrich/dispatch/', $('#dispatchData').val().trim())
         .done(function(data) {
-          var enrichedData = JSON.parse(data);
-          var arrived = enrichedData.apparatus[0].unit_status.arrived;
+          console.log(data);
+          var enrichedData = data.features[0];
+          console.log(enrichedData);
+          featureData = {
+                          'Address': enrichedData.properties.address,
+                          'Description': enrichedData.properties.description,
+                          'Weather': enrichedData.properties.weather,
+                          'Parcel Data': enrichedData.properties.parcel_data
+                        };
+
           var point_feature = new ol.Feature({ });
 
           // must convert coords to ol3 default projection
           var point_geom = new ol.geom.Point(
-            ol.proj.transform([arrived.longitude, arrived.latitude], 'EPSG:4326','EPSG:3857')
+            ol.proj.transform(enrichedData.geometry.coordinates, 'EPSG:4326','EPSG:3857')
           );
           point_feature.setGeometry(point_geom);
-          point_feature.set('enrichedData', enrichedData);
+          point_feature.set('enrichedData', featureData);
           var vector_layer = new ol.layer.Vector({
             source: new ol.source.Vector({
               features: [point_feature]
