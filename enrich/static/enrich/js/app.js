@@ -5,7 +5,7 @@ var ppFeatureData = function (featureData) {
     }
     var htmlArr = R.map(function (features) {
         var attr = [];
-        for (key in features) {
+        for (var key in features) {
             attr.push('<div>{k}: {v}</div>'.supplant({
                 'k': key,
                 'v': features[key]
@@ -15,7 +15,7 @@ var ppFeatureData = function (featureData) {
     }, featureData);
 
     var popupHTML = []
-    for (entry in htmlArr) {
+    for (var entry in htmlArr) {
         var h = '<h4>{title}</h4>'.supplant({ 'title': entry });
         h = h + htmlArr[entry].join('') + '<br/>';
         popupHTML.push(h);
@@ -29,13 +29,12 @@ $('#submit').click(function () {
         .done(function (data) {
             // some simple beautification to better print on the screen
             var enrichedData = data.features[0];
-            featureData = {
+            var featureData = ppFeatureData({
                 'Address': enrichedData.properties.address,
                 'Description': enrichedData.properties.description,
                 'Weather': enrichedData.properties.weather,
                 'Parcel_Data': enrichedData.properties.parcel_data
-            };
-            featureData = ppFeatureData(featureData);
+            });
             var point_feature = new ol.Feature({});
 
             // must convert coords to ol3 default projection
